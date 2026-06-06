@@ -824,7 +824,7 @@ async function uploadSkin() {
     if (push.ok && result.ok) {
       setStatus('ok', '✓ Skin uploaded! Applies on next game launch.');
     } else {
-      setStatus('err', `Upload failed: ${result.error || 'Unknown error'}`);
+      setStatus('err', ` Backend Upload failed: ${result.error || 'Unknown error'}`);
     }
   } catch(e) {
     setStatus('err', 'Could not reach upload server. Try again.');
