@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solarwakes Launcher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;500;600;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & VARS ────────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080b0a;--bg2:#0d1210;--bg3:#121a17;--surface:#162019;
+  --border:#1e2e28;--border2:#2a4038;
+  --green:#39ff8f;--green-dim:#1a3d2a;--green-mid:#22c46a;--green-text:#86efac;
+  --text:#c8e8d8;--muted:#4a7060;--muted2:#2d4a3c;
+  --danger:#ff4d6a;--warn:#ffb347;
+  --font:'Oxanium',sans-serif;--mono:'Share Tech Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow-x:hidden}
+
+/* ── NOISE ───────────────────────────────────────────────── */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity:0.022;
+}
+
+/* ── NAV ─────────────────────────────────────────────────── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:60px;
+  background:rgba(8,11,10,0.85);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+.nav-logo-icon{font-size:22px;color:var(--green);filter:drop-shadow(0 0 8px var(--green))}
+.nav-logo-text{font-size:15px;font-weight:800;letter-spacing:4px;color:var(--text)}
+.nav-links{display:flex;gap:4px}
+.nav-link{
+  background:none;border:none;cursor:pointer;
+  font-family:var(--font);font-size:11px;font-weight:700;letter-spacing:2px;
+  color:var(--muted);padding:8px 14px;border-radius:3px;
+  transition:all 0.15s;text-transform:uppercase;
+}
+.nav-link:hover{color:var(--text);background:var(--surface)}
+.nav-link.active{color:var(--green);background:var(--green-dim)}
+.nav-dl{
+  background:var(--green);border:none;border-radius:3px;cursor:pointer;
+  font-family:var(--font);font-size:11px;font-weight:800;letter-spacing:2px;
+  color:var(--bg);padding:8px 18px;transition:all 0.15s;
+}
+.nav-dl:hover{background:#5affa8;transform:translateY(-1px)}
+
+/* ── PAGES ───────────────────────────────────────────────── */
+.page{display:none;min-height:100vh;padding-top:60px}
+.page.active{display:block}
+
+/* ── HOME PAGE ───────────────────────────────────────────── */
+.hero{
+  position:relative;min-height:calc(100vh - 60px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(var(--border) 1px,transparent 1px),
+    linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:48px 48px;opacity:0.35;
+}
+.hero-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(57,255,143,0.07) 0%,transparent 70%);
+}
+.hero-content{
+  position:relative;z-index:1;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:24px;
+  animation:fadeUp 0.6s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(57,255,143,0.08);border:1px solid rgba(57,255,143,0.25);
+  border-radius:100px;padding:6px 16px;
+  font-size:11px;font-family:var(--mono);color:var(--green-text);
+}
+.badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+.hero-title{
+  font-size:clamp(48px,8vw,96px);font-weight:800;
+  letter-spacing:8px;line-height:1;color:#fff;
+  text-shadow:0 0 80px rgba(57,255,143,0.12);
+}
+.hero-title span{color:var(--green)}
+.hero-sub{
+  font-size:15px;color:var(--muted);max-width:480px;line-height:1.8;
+  font-family:var(--mono);
+}
+.hero-btns{display:flex;gap:12px;margin-top:8px}
+.btn-primary{
+  background:var(--green);border:none;border-radius:3px;
+  color:var(--bg);font-family:var(--font);font-size:13px;font-weight:800;
+  letter-spacing:2px;padding:13px 32px;cursor:pointer;transition:all 0.15s;
+}
+.btn-primary:hover{background:#5affa8;transform:translateY(-2px);box-shadow:0 8px 24px rgba(57,255,143,0.2)}
+.btn-secondary{
+  background:transparent;border:1px solid var(--border2);border-radius:3px;
+  color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;
+  letter-spacing:2px;padding:13px 32px;cursor:pointer;transition:all 0.15s;
+}
+.btn-secondary:hover{border-color:var(--green);color:var(--green-text);background:var(--green-dim)}
+
+.hero-stats{
+  display:flex;gap:48px;margin-top:24px;
+  padding-top:24px;border-top:1px solid var(--border);
+}
+.stat{text-align:center}
+.stat-num{font-size:28px;font-weight:800;color:var(--green);font-family:var(--mono)}
+.stat-label{font-size:10px;letter-spacing:2px;color:var(--muted);margin-top:2px}
+
+.scroll-indicator{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  animation:bounce 2s infinite;
+}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(6px)}}
+.scroll-indicator span{font-size:9px;letter-spacing:2px;color:var(--muted)}
+.scroll-arrow{width:1px;height:24px;background:linear-gradient(var(--green),transparent)}
+
+/* Features Section */
+.features{padding:80px 48px;max-width:1100px;margin:0 auto}
+.section-eyebrow{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--green);margin-bottom:12px}
+.section-title{font-size:32px;font-weight:800;letter-spacing:2px;color:#fff;margin-bottom:48px}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.feature-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:4px;
+  padding:24px;transition:border-color 0.2s;
+  animation:fadeUp 0.5s ease both;
+}
+.feature-card:hover{border-color:var(--border2)}
+.feature-icon{font-size:28px;margin-bottom:16px}
+.feature-name{font-size:15px;font-weight:700;letter-spacing:1px;margin-bottom:8px;color:#fff}
+.feature-desc{font-size:12px;color:var(--muted);line-height:1.8;font-family:var(--mono)}
+
+/* ── DOWNLOAD PAGE ───────────────────────────────────────── */
+.dl-hero{
+  padding:80px 48px 48px;max-width:900px;margin:0 auto;text-align:center;
+}
+.dl-hero .section-title{font-size:40px;margin-bottom:16px}
+.dl-hero p{font-size:14px;color:var(--muted);font-family:var(--mono);line-height:1.8;margin-bottom:40px}
+.dl-card{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:6px;
+  padding:32px;display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:16px;
+}
+.dl-info{text-align:left}
+.dl-name{font-size:18px;font-weight:800;letter-spacing:2px;color:#fff}
+.dl-meta{font-size:11px;font-family:var(--mono);color:var(--muted);margin-top:6px}
+.dl-tag{
+  display:inline-block;font-size:9px;letter-spacing:1px;padding:3px 10px;
+  border-radius:2px;margin-right:8px;font-weight:700;
+}
+.tag-stable{background:var(--green-dim);color:var(--green-text)}
+.tag-win{background:#1a2d40;color:#60a5fa}
+.dl-btn{
+  background:var(--green);border:none;border-radius:3px;
+  color:var(--bg);font-family:var(--font);font-size:12px;font-weight:800;
+  letter-spacing:2px;padding:12px 28px;cursor:pointer;transition:all 0.15s;
+  text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+}
+.dl-btn:hover{background:#5affa8;transform:translateY(-1px)}
+.dl-btn-ghost{
+  background:transparent;border:1px solid var(--border2);border-radius:3px;
+  color:var(--muted);font-family:var(--font);font-size:12px;font-weight:700;
+  letter-spacing:2px;padding:12px 24px;cursor:pointer;transition:all 0.15s;
+  text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+}
+.dl-btn-ghost:hover{border-color:var(--green);color:var(--green-text)}
+
+.screenshots{padding:0 48px 80px;max-width:900px;margin:0 auto}
+.screenshots h3{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--muted);margin-bottom:20px}
+.screenshot-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.screenshot{
+  background:var(--bg2);border:1px solid var(--border);border-radius:4px;
+  aspect-ratio:16/9;overflow:hidden;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;
+  position:relative;
+}
+.screenshot-mock{width:100%;height:100%;position:relative;overflow:hidden}
+/* Mock launcher screenshot */
+.mock-nav{height:32px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 12px;gap:8px}
+.mock-dot{width:8px;height:8px;border-radius:50%}
+.mock-body{display:flex;height:calc(100% - 32px)}
+.mock-sidebar{width:40px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:6px}
+.mock-sidebar-icon{width:24px;height:24px;border-radius:4px;background:var(--border)}
+.mock-sidebar-icon.active{background:var(--green-dim)}
+.mock-main{flex:1;display:flex;flex-direction:column}
+.mock-hero-bar{height:90px;background:linear-gradient(135deg,#0d1f14,#091a10);position:relative;overflow:hidden;padding:12px}
+.mock-hero-title{font-size:18px;font-weight:800;letter-spacing:3px;color:#fff;font-family:var(--font)}
+.mock-hero-sub{font-size:8px;color:var(--green);font-family:var(--mono);margin-top:2px}
+.mock-launch{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:var(--green);color:var(--bg);font-size:8px;font-weight:700;padding:6px 12px;border-radius:2px;font-family:var(--font);letter-spacing:1px}
+.mock-content{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:0}
+.mock-panel{border-right:1px solid var(--border);padding:6px}
+.mock-panel-header{font-size:7px;letter-spacing:1px;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px}
+.mock-version-item{display:flex;align-items:center;gap:4px;padding:3px 4px;border-radius:2px;margin-bottom:2px}
+.mock-version-item.sel{background:var(--green-dim)}
+.mock-vdot{width:5px;height:5px;border-radius:50%;background:var(--green);flex-shrink:0}
+.mock-vtext{font-size:7px;font-family:var(--mono);color:var(--text)}
+.mock-console-line{font-size:6px;font-family:var(--mono);color:var(--muted);padding:1px 0}
+.mock-console-line.ok{color:var(--green-text)}
+.screenshot-label{
+  position:absolute;bottom:0;left:0;right:0;
+  background:linear-gradient(transparent,rgba(8,11,10,0.9));
+  padding:16px 12px 8px;font-size:10px;letter-spacing:1px;color:var(--muted);
+}
+
+.req-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:24px;padding:0 48px 80px;max-width:900px;margin-left:auto;margin-right:auto}
+.req-card{background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:20px}
+.req-title{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--muted);margin-bottom:12px}
+.req-item{font-size:12px;font-family:var(--mono);color:var(--text);padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between}
+.req-item:last-child{border-bottom:none}
+.req-val{color:var(--green-text)}
+
+/* ── SKIN CHANGER PAGE ───────────────────────────────────── */
+.skin-page{padding:80px 48px;max-width:800px;margin:0 auto}
+.skin-page .section-title{font-size:32px;margin-bottom:8px}
+.skin-page .section-sub{font-size:13px;color:var(--muted);font-family:var(--mono);margin-bottom:40px;line-height:1.8}
+
+.skin-form-wrap{
+  display:grid;grid-template-columns:200px 1fr;gap:24px;
+  background:var(--bg2);border:1px solid var(--border2);border-radius:6px;padding:32px;
+}
+.skin-preview-col{display:flex;flex-direction:column;align-items:center;gap:16px}
+.skin-face-preview{
+  width:120px;height:120px;background:var(--bg3);
+  border:1px solid var(--border2);border-radius:4px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.skin-face-preview canvas{image-rendering:pixelated}
+.skin-face-preview .placeholder{
+  width:60px;height:60px;background:var(--green-dim);border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:24px;color:var(--green);
+}
+.skin-preview-label{font-size:11px;color:var(--muted);letter-spacing:1px;font-family:var(--mono)}
+
+.skin-form-col{display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--muted)}
+.field input{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:3px;
+  color:var(--text);font-family:var(--mono);font-size:13px;
+  padding:10px 12px;outline:none;transition:border-color 0.2s;
+}
+.field input:focus{border-color:var(--green)}
+.field input::placeholder{color:var(--muted)}
+.field input[type=file]{cursor:pointer;padding:8px 12px}
+
+.upload-btn{
+  background:var(--green);border:none;border-radius:3px;
+  color:var(--bg);font-family:var(--font);font-size:13px;font-weight:800;
+  letter-spacing:2px;padding:12px;cursor:pointer;transition:all 0.15s;
+  margin-top:4px;
+}
+.upload-btn:hover{background:#5affa8;transform:translateY(-1px)}
+.upload-btn:disabled{background:var(--green-dim);color:var(--muted);cursor:not-allowed;transform:none}
+
+.skin-status{font-size:12px;font-family:var(--mono);min-height:18px;text-align:center}
+.skin-status.ok{color:var(--green)}
+.skin-status.err{color:var(--danger)}
+.skin-status.loading{color:var(--muted)}
+
+.skin-how{margin-top:48px}
+.skin-how h3{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--muted);margin-bottom:20px}
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--bg2);border:1px solid var(--border);border-radius:4px}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--green-dim);color:var(--green);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-text strong{font-size:13px;font-weight:700;display:block;margin-bottom:4px}
+.step-text span{font-size:12px;color:var(--muted);font-family:var(--mono)}
+
+/* ── FOOTER ──────────────────────────────────────────────── */
+footer{
+  border-top:1px solid var(--border);padding:32px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:40px;
+}
+.footer-logo{display:flex;align-items:center;gap:8px}
+.footer-logo-icon{font-size:16px;color:var(--green)}
+.footer-logo-text{font-size:12px;font-weight:700;letter-spacing:3px;color:var(--muted)}
+.footer-links{display:flex;gap:24px}
+.footer-link{font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;transition:color 0.15s}
+.footer-link:hover{color:var(--green-text)}
+.footer-copy{font-size:11px;color:var(--muted2);font-family:var(--mono)}
+
+/* ── ANIMATIONS ──────────────────────────────────────────── */
+.fade-in{opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.feature-card:nth-child(1){animation-delay:0.05s}
+.feature-card:nth-child(2){animation-delay:0.1s}
+.feature-card:nth-child(3){animation-delay:0.15s}
+.feature-card:nth-child(4){animation-delay:0.2s}
+.feature-card:nth-child(5){animation-delay:0.25s}
+.feature-card:nth-child(6){animation-delay:0.3s}
+</style>
+</head>
+<body>
+
+<!-- ── NAV ───────────────────────────────────────────────── -->
+<nav>
+  <a class="nav-logo" href="#" onclick="showPage('home')">
+    <span class="nav-logo-icon">⬡</span>
+    <span class="nav-logo-text">SOLARWAKES</span>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('home')">Home</button>
+    <button class="nav-link" onclick="showPage('download')">Download</button>
+    <button class="nav-link" onclick="showPage('skins')">Skin Changer</button>
+  </div>
+  <button class="nav-dl" onclick="showPage('download')">↓ DOWNLOAD</button>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════════════════════════ -->
+<div id="page-home" class="page active">
+  <section class="hero">
+    <div class="hero-grid"></div>
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        <span>NOW AVAILABLE · FREE FOREVER</span>
+      </div>
+      <div class="hero-title">SOLAR<span>WAKES</span></div>
+      <p class="hero-sub">A custom Minecraft launcher with friends, skins, multi-account support, and a console — built different.</p>
+      <div class="hero-btns">
+        <button class="btn-primary" onclick="showPage('download')">↓ DOWNLOAD FREE</button>
+        <button class="btn-secondary" onclick="showPage('skins')">CHANGE SKIN →</button>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><div class="stat-num">100%</div><div class="stat-label">FREE</div></div>
+        <div class="stat"><div class="stat-num">OFFLINE</div><div class="stat-label">NO MICROSOFT</div></div>
+        <div class="stat"><div class="stat-num">MULTI</div><div class="stat-label">ACCOUNT</div></div>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <span>SCROLL</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <section class="features">
+    <div class="section-eyebrow">FEATURES</div>
+    <div class="section-title">Everything you need.</div>
+    <div class="features-grid">
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⬡</div>
+        <div class="feature-name">FRIENDS SYSTEM</div>
+        <div class="feature-desc">Add friends, see who's online, who's in-game — all in real time. No Discord needed.</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">◈</div>
+        <div class="feature-name">CUSTOM SKINS</div>
+        <div class="feature-desc">Upload your skin once on the website. It syncs to the launcher and applies at launch automatically.</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">▤</div>
+        <div class="feature-name">MULTI ACCOUNT</div>
+        <div class="feature-desc">Switch between multiple accounts instantly. Each account keeps its own skin and session.</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">▶</div>
+        <div class="feature-name">LAUNCH ANY VERSION</div>
+        <div class="feature-desc">Auto-detects all installed versions from your .minecraft folder. Release, snapshot, Fabric — all supported.</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⌨</div>
+        <div class="feature-name">LIVE CONSOLE</div>
+        <div class="feature-desc">Watch game output in real time directly in the launcher. Debug crashes without opening a terminal.</div>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="feature-icon">⚙</div>
+        <div class="feature-name">RAM CONTROL</div>
+        <div class="feature-desc">Set your JVM memory allocation with a simple slider. 1GB to 16GB. No config file editing required.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-logo">
+      <span class="footer-logo-icon">⬡</span>
+      <span class="footer-logo-text">SOLARWAKES</span>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://github.com/naklirajveerfr/Solarwakes-Launcher" target="_blank">GitHub</a>
+      <a class="footer-link" href="#" onclick="showPage('download')">Download</a>
+      <a class="footer-link" href="#" onclick="showPage('skins')">Skin Changer</a>
+    </div>
+    <div class="footer-copy">© 2025 Solarwakes · Not affiliated with Mojang</div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     DOWNLOAD PAGE
+══════════════════════════════════════════════════════════ -->
+<div id="page-download" class="page">
+  <div class="dl-hero">
+    <div class="section-eyebrow">DOWNLOAD</div>
+    <div class="section-title">Get the launcher.</div>
+    <p>Free to download and use. No Microsoft account required.<br>Requires Java 17+ and Google Chrome installed.</p>
+
+    <div class="dl-card">
+      <div class="dl-info">
+        <div class="dl-name">SOLARWAKES LAUNCHER</div>
+        <div class="dl-meta">
+          <span class="dl-tag tag-stable">STABLE</span>
+          <span class="dl-tag tag-win">WINDOWS</span>
+          v1.0 · launcher.exe · ~15MB
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <a class="dl-btn" href="https://github.com/naklirajveerfr/Solarwakes-Launcher/releases" target="_blank">↓ DOWNLOAD EXE</a>
+        <a class="dl-btn-ghost" href="https://github.com/naklirajveerfr/Solarwakes-Launcher" target="_blank">VIEW SOURCE</a>
+      </div>
+    </div>
+
+    <div class="dl-card" style="opacity:0.5">
+      <div class="dl-info">
+        <div class="dl-name">LINUX / MAC</div>
+        <div class="dl-meta">Run from source with Python 3.10+</div>
+      </div>
+      <a class="dl-btn-ghost" href="https://github.com/naklirajveerfr/Solarwakes-Launcher" target="_blank">VIEW README</a>
+    </div>
+  </div>
+
+  <div class="screenshots">
+    <h3>SCREENSHOTS</h3>
+    <div class="screenshot-grid">
+
+      <!-- Screenshot 1: Play Tab Mock -->
+      <div class="screenshot">
+        <div class="screenshot-mock">
+          <div class="mock-nav">
+            <div class="mock-dot" style="background:#ff4d6a"></div>
+            <div class="mock-dot" style="background:#ffb347"></div>
+            <div class="mock-dot" style="background:#39ff8f"></div>
+          </div>
+          <div class="mock-body">
+            <div class="mock-sidebar">
+              <div class="mock-sidebar-icon active"></div>
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon"></div>
+            </div>
+            <div class="mock-main">
+              <div class="mock-hero-bar">
+                <div style="font-size:7px;color:var(--green);font-family:var(--mono);letter-spacing:2px;margin-bottom:2px">READY TO LAUNCH</div>
+                <div class="mock-hero-title">MINECRAFT</div>
+                <div class="mock-hero-sub">1.21.4 Release</div>
+                <div class="mock-launch">▶ LAUNCH</div>
+              </div>
+              <div class="mock-content">
+                <div class="mock-panel">
+                  <div class="mock-panel-header">INSTALLED VERSIONS</div>
+                  <div class="mock-version-item sel"><div class="mock-vdot"></div><span class="mock-vtext">1.21.4</span></div>
+                  <div class="mock-version-item"><div class="mock-vdot" style="background:var(--warn)"></div><span class="mock-vtext">25w01a</span></div>
+                  <div class="mock-version-item"><div class="mock-vdot" style="background:#c084fc"></div><span class="mock-vtext">1.21.4 Fabric</span></div>
+                  <div class="mock-version-item"><div class="mock-vdot"></div><span class="mock-vtext">1.20.1</span></div>
+                </div>
+                <div class="mock-panel">
+                  <div class="mock-panel-header">CONSOLE</div>
+                  <div class="mock-console-line ok">» Launcher ready.</div>
+                  <div class="mock-console-line">Loading assets...</div>
+                  <div class="mock-console-line">JVM args set.</div>
+                  <div class="mock-console-line ok">» Game launched.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screenshot-label">Play Tab — version selector & console</div>
+      </div>
+
+      <!-- Screenshot 2: Friends Tab Mock -->
+      <div class="screenshot">
+        <div class="screenshot-mock">
+          <div class="mock-nav">
+            <div class="mock-dot" style="background:#ff4d6a"></div>
+            <div class="mock-dot" style="background:#ffb347"></div>
+            <div class="mock-dot" style="background:#39ff8f"></div>
+          </div>
+          <div class="mock-body">
+            <div class="mock-sidebar">
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon active"></div>
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon"></div>
+            </div>
+            <div class="mock-main" style="padding:10px">
+              <div style="font-size:10px;font-weight:800;letter-spacing:3px;color:#fff;margin-bottom:10px">FRIENDS</div>
+              <div style="font-size:7px;letter-spacing:1px;color:var(--green);margin-bottom:6px">ONLINE</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:5px;background:var(--surface);border-radius:2px;margin-bottom:4px">
+                <div style="width:16px;height:16px;background:var(--green-dim);border-radius:2px"></div>
+                <span style="font-size:8px;font-family:var(--mono);flex:1">steve123</span>
+                <span style="font-size:7px;color:var(--green)">IN GAME</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;padding:5px;border-radius:2px;margin-bottom:8px">
+                <div style="width:16px;height:16px;background:var(--green-dim);border-radius:2px"></div>
+                <span style="font-size:8px;font-family:var(--mono);flex:1">alex99</span>
+                <span style="font-size:7px;color:var(--green)">ONLINE</span>
+              </div>
+              <div style="font-size:7px;letter-spacing:1px;color:var(--muted);margin-bottom:6px">OFFLINE</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:5px;border-radius:2px">
+                <div style="width:16px;height:16px;background:var(--border2);border-radius:2px"></div>
+                <span style="font-size:8px;font-family:var(--mono);flex:1;color:var(--muted)">notch</span>
+                <span style="font-size:7px;color:var(--muted)">OFFLINE</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screenshot-label">Friends Tab — real-time online status</div>
+      </div>
+
+      <!-- Screenshot 3: Auth Screen Mock -->
+      <div class="screenshot">
+        <div class="screenshot-mock" style="background:var(--bg);display:flex;align-items:center;justify-content:center">
+          <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:4px;padding:20px;width:160px">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:14px">
+              <span style="color:var(--green);font-size:14px">⬡</span>
+              <span style="font-size:10px;font-weight:800;letter-spacing:2px">SOLARWAKES</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;border-bottom:1px solid var(--border2);padding-bottom:8px">
+              <span style="font-size:8px;font-weight:700;color:var(--green);letter-spacing:1px">LOGIN</span>
+              <span style="font-size:8px;font-weight:700;color:var(--muted);letter-spacing:1px">REGISTER</span>
+            </div>
+            <div style="font-size:7px;letter-spacing:1px;color:var(--muted);margin-bottom:3px">USERNAME</div>
+            <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:5px 8px;font-size:8px;font-family:var(--mono);margin-bottom:8px;color:var(--muted)">your_username</div>
+            <div style="font-size:7px;letter-spacing:1px;color:var(--muted);margin-bottom:3px">PASSWORD</div>
+            <div style="background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:5px 8px;font-size:8px;font-family:var(--mono);margin-bottom:10px;color:var(--muted)">••••••••</div>
+            <div style="background:var(--green);border-radius:2px;padding:6px;font-size:8px;font-weight:800;color:var(--bg);text-align:center;letter-spacing:1px">CONNECT</div>
+          </div>
+        </div>
+        <div class="screenshot-label">Login Screen — Firebase auth</div>
+      </div>
+
+      <!-- Screenshot 4: Accounts Tab Mock -->
+      <div class="screenshot">
+        <div class="screenshot-mock">
+          <div class="mock-nav">
+            <div class="mock-dot" style="background:#ff4d6a"></div>
+            <div class="mock-dot" style="background:#ffb347"></div>
+            <div class="mock-dot" style="background:#39ff8f"></div>
+          </div>
+          <div class="mock-body">
+            <div class="mock-sidebar">
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon"></div>
+              <div class="mock-sidebar-icon active"></div>
+            </div>
+            <div class="mock-main" style="padding:10px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+                <div style="font-size:10px;font-weight:800;letter-spacing:3px;color:#fff">ACCOUNTS</div>
+                <div style="background:var(--green);font-size:7px;font-weight:800;padding:3px 8px;border-radius:2px;color:var(--bg)">+ ADD</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+                <div style="background:var(--surface);border:1px solid rgba(57,255,143,0.3);border-radius:3px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                  <div style="width:24px;height:24px;background:var(--green-dim);border-radius:2px"></div>
+                  <span style="font-size:8px;font-family:var(--mono)">Rajveer</span>
+                  <span style="font-size:7px;background:var(--green-dim);color:var(--green-text);padding:1px 6px;border-radius:1px">ACTIVE</span>
+                </div>
+                <div style="background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px">
+                  <div style="width:24px;height:24px;background:var(--border2);border-radius:2px"></div>
+                  <span style="font-size:8px;font-family:var(--mono);color:var(--muted)">AltAccount</span>
+                  <span style="font-size:7px;background:var(--bg3);color:var(--muted);padding:1px 6px;border-radius:1px;border:1px solid var(--border)">SWITCH</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="screenshot-label">Accounts Tab — multi-account switching</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="req-grid">
+    <div class="req-card">
+      <div class="req-title">REQUIREMENTS</div>
+      <div class="req-item"><span>OS</span><span class="req-val">Windows 10+</span></div>
+      <div class="req-item"><span>Java</span><span class="req-val">17 or 21</span></div>
+      <div class="req-item"><span>Chrome</span><span class="req-val">Any version</span></div>
+      <div class="req-item"><span>RAM</span><span class="req-val">4GB+</span></div>
+    </div>
+    <div class="req-card">
+      <div class="req-title">INSTALL STEPS</div>
+      <div class="req-item"><span>1.</span><span class="req-val">Download .exe</span></div>
+      <div class="req-item"><span>2.</span><span class="req-val">Run it</span></div>
+      <div class="req-item"><span>3.</span><span class="req-val">Register account</span></div>
+      <div class="req-item"><span>4.</span><span class="req-val">Launch game</span></div>
+    </div>
+    <div class="req-card">
+      <div class="req-title">NOTES</div>
+      <div class="req-item"><span>Auth</span><span class="req-val">Offline mode</span></div>
+      <div class="req-item"><span>Cost</span><span class="req-val">Free forever</span></div>
+      <div class="req-item"><span>Source</span><span class="req-val">Open source</span></div>
+      <div class="req-item"><span>Updates</span><span class="req-val">Via GitHub</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">
+      <span class="footer-logo-icon">⬡</span>
+      <span class="footer-logo-text">SOLARWAKES</span>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://github.com/naklirajveerfr/Solarwakes-Launcher" target="_blank">GitHub</a>
+    </div>
+    <div class="footer-copy">© 2025 Solarwakes · Not affiliated with Mojang</div>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SKIN CHANGER PAGE
+══════════════════════════════════════════════════════════ -->
+<div id="page-skins" class="page">
+  <div class="skin-page">
+    <div class="section-eyebrow">SKIN CHANGER</div>
+    <div class="section-title">Update your skin.</div>
+    <div class="section-sub">Upload a skin here and it will apply the next time you launch the game.<br>Your password is used to verify it's really you — it's never stored on this site.</div>
+
+    <div class="skin-form-wrap">
+      <div class="skin-preview-col">
+        <div class="skin-face-preview">
+          <canvas id="skin-canvas" width="64" height="64"></canvas>
+        </div>
+        <div class="skin-preview-label" id="preview-label">NO SKIN SELECTED</div>
+      </div>
+      <div class="skin-form-col">
+        <div class="field">
+          <label>USERNAME</label>
+          <input type="text" id="sw-username" placeholder="your_username" autocomplete="off">
+        </div>
+        <div class="field">
+          <label>PASSWORD</label>
+          <input type="password" id="sw-password" placeholder="••••••••">
+        </div>
+        <div class="field">
+          <label>SKIN FILE (64×64 PNG)</label>
+          <input type="file" id="sw-skinfile" accept=".png" onchange="previewSkin(this)">
+        </div>
+        <div class="skin-status" id="skin-status"></div>
+        <button class="upload-btn" id="upload-btn" onclick="uploadSkin()">UPLOAD SKIN</button>
+      </div>
+    </div>
+
+    <div class="skin-how">
+      <h3>HOW IT WORKS</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Enter your launcher credentials</strong>
+            <span>Same username and password you use to log into the Solarwakes Launcher.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Pick your skin PNG</strong>
+            <span>Standard 64×64 or 128×128 Minecraft Java Edition skin file.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Click Upload</strong>
+            <span>Your skin is saved to the Solarwakes skin server and verified against your account.</span>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <strong>Launch the game</strong>
+            <span>The launcher fetches your skin automatically on next launch. No manual file copying needed.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">
+      <span class="footer-logo-icon">⬡</span>
+      <span class="footer-logo-text">SOLARWAKES</span>
+    </div>
+    <div class="footer-links">
+      <a class="footer-link" href="https://github.com/naklirajveerfr/Solarwakes-Launcher" target="_blank">GitHub</a>
+    </div>
+    <div class="footer-copy">© 2025 Solarwakes · Not affiliated with Mojang</div>
+  </footer>
+</div>
+
+<script>
+/* ── CONFIG ──────────────────────────────────────────────── */
+const FB_URL     = 'https://solarwakes-fd15a-default-rtdb.firebaseio.com';
+const APP_SECRET = 'pycraft-v5-2024';
+const GH_TOKEN   = 'YOUR_GITHUB_TOKEN_HERE'; // replace with your token
+const GH_REPO    = 'naklirajveerfr/solarwakes-skins';
+
+/* ── PAGE SWITCHING ──────────────────────────────────────── */
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById(`page-${name}`).classList.add('active');
+  document.querySelector(`.nav-link[onclick*="${name}"]`).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ── SCROLL ANIMATIONS ───────────────────────────────────── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+/* ── SKIN PREVIEW ────────────────────────────────────────── */
+function previewSkin(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.getElementById('skin-canvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, 64, 64);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 64, 64);
+      ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 64, 64);
+      document.getElementById('preview-label').textContent = file.name.toUpperCase();
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+/* ── SHA256 ──────────────────────────────────────────────── */
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+function safeKey(u) { return u.replace(/[.#$[\]/]/g, '_'); }
+
+/* ── UPLOAD SKIN ─────────────────────────────────────────── */
+async function uploadSkin() {
+  const username  = document.getElementById('sw-username').value.trim();
+  const password  = document.getElementById('sw-password').value;
+  const fileInput = document.getElementById('sw-skinfile');
+  const statusEl  = document.getElementById('skin-status');
+  const btn       = document.getElementById('upload-btn');
+
+  statusEl.className = 'skin-status';
+  statusEl.textContent = '';
+
+  if (!username || !password) { setStatus('err', 'Enter your username and password.'); return; }
+  if (!fileInput.files[0])    { setStatus('err', 'Select a skin PNG file.'); return; }
+
+  btn.disabled = true;
+  setStatus('loading', 'Verifying credentials...');
+
+  // 1. Verify against Firebase
+  try {
+    const hash = await sha256(`${APP_SECRET}:${password}`);
+    const res  = await fetch(`${FB_URL}/users/${safeKey(username)}.json`);
+    const user = await res.json();
+    if (!user || user.password !== hash) {
+      setStatus('err', 'Wrong username or password.'); btn.disabled = false; return;
+    }
+  } catch(e) {
+    setStatus('err', 'Could not connect to auth server.'); btn.disabled = false; return;
+  }
+
+  setStatus('loading', 'Uploading skin...');
+
+  // 2. Read as base64
+  const file   = fileInput.files[0];
+  const base64 = await new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload  = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+
+  // 3. Check if file exists for SHA
+  const filePath = `skins/${username}.png`;
+  let sha;
+  try {
+    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${filePath}`,
+      { headers: { Authorization: `token ${GH_TOKEN}` } });
+    if (check.ok) { const d = await check.json(); sha = d.sha; }
+  } catch(e) {}
+
+  // 4. Push to GitHub
+  const body = { message: `skin: ${username}`, content: base64, branch: 'main' };
+  if (sha) body.sha = sha;
+
+  try {
+    const push = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${filePath}`, {
+      method: 'PUT',
+      headers: { Authorization: `token ${GH_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (push.ok) {
+      setStatus('ok', '✓ Skin uploaded! Applies on next game launch.');
+    } else {
+      const err = await push.json();
+      setStatus('err', `GitHub error: ${err.message}`);
+    }
+  } catch(e) {
+    setStatus('err', 'Upload failed. Check your connection.');
+  }
+  btn.disabled = false;
+}
+
+function setStatus(type, msg) {
+  const el = document.getElementById('skin-status');
+  el.className = `skin-status ${type}`;
+  el.textContent = msg;
+}
+</script>
+</body>
+</html>
