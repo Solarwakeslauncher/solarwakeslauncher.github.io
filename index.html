@@ -705,10 +705,10 @@ footer{
 
 <script>
 /* ── CONFIG ──────────────────────────────────────────────── */
-const FB_URL     = 'https://solarwakes-fd15a-default-rtdb.firebaseio.com';
-const APP_SECRET = 'pycraft-v5-2024';
-const GH_TOKEN   = 'YOUR_GITHUB_TOKEN_HERE'; // replace with your token
-const GH_REPO    = 'naklirajveerfr/solarwakes-skins';
+const FB_URL      = 'https://solarwakes-fd15a-default-rtdb.firebaseio.com';
+const APP_SECRET  = 'pycraft-v5-2024';
+const GH_REPO     = 'naklirajveerfr/solarwakes-skins';
+const VERCEL_API  = 'https://solarwakes-api.vercel.app/api/upload-skin'; // your vercel URL
 
 /* ── PAGE SWITCHING ──────────────────────────────────────── */
 function showPage(name) {
@@ -737,8 +737,8 @@ function previewSkin(input) {
       const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, 64, 64);
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 64, 64);
-      ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 64, 64);
+      ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 64, 64); // face layer
+      ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 64, 64); // hat layer
       document.getElementById('preview-label').textContent = file.name.toUpperCase();
     };
     img.src = e.target.result;
@@ -758,11 +758,9 @@ async function uploadSkin() {
   const username  = document.getElementById('sw-username').value.trim();
   const password  = document.getElementById('sw-password').value;
   const fileInput = document.getElementById('sw-skinfile');
-  const statusEl  = document.getElementById('skin-status');
   const btn       = document.getElementById('upload-btn');
 
-  statusEl.className = 'skin-status';
-  statusEl.textContent = '';
+  setStatus('', '');
 
   if (!username || !password) { setStatus('err', 'Enter your username and password.'); return; }
   if (!fileInput.files[0])    { setStatus('err', 'Select a skin PNG file.'); return; }
@@ -776,54 +774,66 @@ async function uploadSkin() {
     const res  = await fetch(`${FB_URL}/users/${safeKey(username)}.json`);
     const user = await res.json();
     if (!user || user.password !== hash) {
-      setStatus('err', 'Wrong username or password.'); btn.disabled = false; return;
+      setStatus('err', 'Wrong username or password.');
+      btn.disabled = false;
+      return;
     }
   } catch(e) {
-    setStatus('err', 'Could not connect to auth server.'); btn.disabled = false; return;
+    setStatus('err', 'Could not connect to auth server.');
+    btn.disabled = false;
+    return;
   }
 
-  setStatus('loading', 'Uploading skin...');
+  setStatus('loading', 'Reading skin file...');
 
-  // 2. Read as base64
+  // 2. Read skin as base64
   const file   = fileInput.files[0];
-  const base64 = await new Promise((res, rej) => {
+  const base64 = await new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload  = () => res(r.result.split(',')[1]);
-    r.onerror = rej;
+    r.onload  = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
     r.readAsDataURL(file);
   });
 
-  // 3. Check if file exists for SHA
-  const filePath = `skins/${username}.png`;
+  setStatus('loading', 'Checking existing skin...');
+
+  // 3. Check if skin already exists (need SHA to update)
   let sha;
   try {
-    const check = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${filePath}`,
-      { headers: { Authorization: `token ${GH_TOKEN}` } });
-    if (check.ok) { const d = await check.json(); sha = d.sha; }
+    const check = await fetch(
+      `https://api.github.com/repos/${GH_REPO}/contents/skins/${username}.png`
+    );
+    if (check.ok) {
+      const d = await check.json();
+      sha = d.sha;
+    }
   } catch(e) {}
 
-  // 4. Push to GitHub
-  const body = { message: `skin: ${username}`, content: base64, branch: 'main' };
-  if (sha) body.sha = sha;
+  setStatus('loading', 'Uploading skin...');
 
+  // 4. Send to Vercel proxy (token is hidden server-side)
   try {
-    const push = await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${filePath}`, {
-      method: 'PUT',
-      headers: { Authorization: `token ${GH_TOKEN}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+    const push = await fetch(VERCEL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, base64, sha })
     });
-    if (push.ok) {
+
+    const result = await push.json();
+
+    if (push.ok && result.ok) {
       setStatus('ok', '✓ Skin uploaded! Applies on next game launch.');
     } else {
-      const err = await push.json();
-      setStatus('err', `GitHub error: ${err.message}`);
+      setStatus('err', `Upload failed: ${result.error || 'Unknown error'}`);
     }
   } catch(e) {
-    setStatus('err', 'Upload failed. Check your connection.');
+    setStatus('err', 'Could not reach upload server. Try again.');
   }
+
   btn.disabled = false;
 }
 
+/* ── STATUS HELPER ───────────────────────────────────────── */
 function setStatus(type, msg) {
   const el = document.getElementById('skin-status');
   el.className = `skin-status ${type}`;
